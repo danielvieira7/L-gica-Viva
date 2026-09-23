@@ -1,0 +1,6 @@
+{
+  "name": "Lógica Viva - Algoritmos Visuais",
+  "description": "Aprenda o pensamento algorítmico do zero com quebra-cabeças visuais interativos, sem códigos e com execução passo a passo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
