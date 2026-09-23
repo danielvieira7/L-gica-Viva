@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, StepForward, RotateCcw, Zap } from 'lucide-react';
+import { Play, Pause, StepForward, RotateCcw } from 'lucide-react';
 import { sound } from '../utils/sound';
 
 interface ExecutionControlsProps {
@@ -14,6 +14,7 @@ interface ExecutionControlsProps {
   onReset: () => void;
   onSpeedChange: (speed: number) => void;
   disabled?: boolean;
+  primaryColor?: string;
 }
 
 export const ExecutionControls: React.FC<ExecutionControlsProps> = ({
@@ -28,11 +29,12 @@ export const ExecutionControls: React.FC<ExecutionControlsProps> = ({
   onReset,
   onSpeedChange,
   disabled = false,
+  primaryColor = '#2787F5',
 }) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-900 border border-slate-800 rounded-xl shadow-inner">
+    <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white border border-[#E2E8F0] rounded-2xl shadow-card-soft">
       {/* Play / Step / Reset cluster */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 sm:gap-2.5">
         {isRunning && !isPaused ? (
           <button
             onClick={() => {
@@ -40,7 +42,7 @@ export const ExecutionControls: React.FC<ExecutionControlsProps> = ({
               onPause();
             }}
             disabled={disabled}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 text-xs font-bold rounded-lg transition-all shadow-md cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-amber-500/25 cursor-pointer disabled:opacity-50"
           >
             <Pause className="w-4 h-4 fill-current" />
             <span>Pausar</span>
@@ -52,7 +54,10 @@ export const ExecutionControls: React.FC<ExecutionControlsProps> = ({
               onPlay();
             }}
             disabled={disabled || totalSteps === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-slate-950 text-xs font-bold rounded-lg transition-all shadow-md shadow-emerald-500/20 cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 active:scale-95 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-blue-500/25 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: disabled || totalSteps === 0 ? '#94A3B8' : primaryColor,
+            }}
           >
             <Play className="w-4 h-4 fill-current" />
             <span>{isPaused ? 'Continuar' : 'Executar'}</span>
@@ -65,11 +70,12 @@ export const ExecutionControls: React.FC<ExecutionControlsProps> = ({
             onStepForward();
           }}
           disabled={disabled || totalSteps === 0}
-          title="Avança exatamente 1 comando na visualização"
-          className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition-all cursor-pointer disabled:opacity-40"
+          title="Executa exatamente 1 comando para você acompanhar a lógica"
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#F8FAFD] hover:bg-slate-100 active:scale-95 text-[#15213D] text-sm font-semibold rounded-xl border border-[#CBD5E1] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <StepForward className="w-3.5 h-3.5" />
-          <span>Passo a Passo</span>
+          <StepForward className="w-4 h-4 text-[#536178]" />
+          <span className="hidden sm:inline">Passo a passo</span>
+          <span className="sm:hidden">Passo</span>
         </button>
 
         <button
@@ -77,25 +83,24 @@ export const ExecutionControls: React.FC<ExecutionControlsProps> = ({
             sound.click();
             onReset();
           }}
-          title="Reiniciar posição inicial"
-          className="p-2 bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-slate-400 hover:text-slate-100 rounded-lg border border-slate-700/60 transition-all cursor-pointer"
+          title="Reiniciar posição inicial do teste"
+          aria-label="Reiniciar teste"
+          className="p-2.5 bg-[#F8FAFD] hover:bg-slate-100 active:scale-95 text-[#536178] hover:text-[#15213D] rounded-xl border border-[#CBD5E1] transition-all cursor-pointer"
         >
           <RotateCcw className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Progress & Speed */}
+      {/* Progress & Speed Group */}
       <div className="flex items-center gap-3">
         {totalSteps > 0 && (
-          <div className="text-xs text-slate-400 font-mono tabular-nums">
-            Passo <span className="text-indigo-400 font-bold">{Math.max(0, currentStepIndex + 1)}</span>
-            <span className="text-slate-600"> / </span>
-            <span>{totalSteps}</span>
+          <div className="text-xs text-[#536178] font-medium bg-[#F8FAFD] px-3 py-1.5 rounded-xl border border-[#E2E8F0]">
+            Passo <strong className="text-[#15213D]">{Math.max(0, currentStepIndex + 1)}</strong> de <strong>{totalSteps}</strong>
           </div>
         )}
 
-        {/* Speed toggle */}
-        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+        {/* Speed toggle pills */}
+        <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-xl border border-[#E2E8F0]">
           {[0.5, 1, 2].map((s) => (
             <button
               key={s}
@@ -103,10 +108,10 @@ export const ExecutionControls: React.FC<ExecutionControlsProps> = ({
                 sound.click();
                 onSpeedChange(s);
               }}
-              className={`px-2 py-1 text-[11px] font-medium rounded transition-colors cursor-pointer ${
+              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 speed === s
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-[#15213D] shadow-xs'
+                  : 'text-[#8491A5] hover:text-[#536178]'
               }`}
             >
               {s}x

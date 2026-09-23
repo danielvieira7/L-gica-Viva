@@ -1,1 +1,53 @@
 @import "tailwindcss";
+
+@layer base {
+  html {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    color: #15213D;
+    background-color: #F5F8FC;
+  }
+}
+
+.shadow-card-soft {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 20px rgba(15, 23, 42, 0.06);
+}
+
+.shadow-interactive-hover {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.shadow-interactive-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px -4px rgba(15, 23, 42, 0.1), 0 2px 6px -1px rgba(15, 23, 42, 0.06);
+}
+
+.shadow-button-primary {
+  box-shadow: 0 4px 14px -2px rgba(39, 135, 245, 0.35);
+}
+.shadow-button-primary:hover {
+  box-shadow: 0 6px 20px -2px rgba(39, 135, 245, 0.45);
+}
+
+/* Tactile command button styling */
+.tactile-btn {
+  transition: all 0.15s ease-out;
+}
+.tactile-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

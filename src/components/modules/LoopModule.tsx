@@ -3,21 +3,22 @@ import {
   Repeat, 
   Sparkles, 
   Sprout, 
-  Droplet, 
-  ArrowUp, 
-  RotateCw, 
+  Droplets, 
+  ArrowRight, 
   Trash2, 
   CheckCircle2, 
-  HelpCircle,
-  Zap,
-  RotateCcw
+  Bot,
+  Layers
 } from 'lucide-react';
-import { ActionType, ActionBlock, GridPos, Direction } from '../../types';
+import { ActionType, GridPos } from '../../types';
 import { sound } from '../../utils/sound';
 import { triggerConfetti } from '../../utils/confetti';
 import { ExecutionControls } from '../ExecutionControls';
-import { TheoryCard } from '../TheoryCard';
+import { ModuleHero } from '../ModuleHero';
+import { HintCard } from '../HintCard';
+import { LearningInsight } from '../LearningInsight';
 import { VictoryModal } from '../VictoryModal';
+import { MODULE_THEMES } from '../../designTokens';
 
 interface PlotCell {
   x: number;
@@ -25,20 +26,38 @@ interface PlotCell {
   state: 'soil' | 'seeded' | 'bloomed';
 }
 
+const ACTION_INFO: Record<string, { label: string; icon: React.ReactNode; bg: string; text: string; border: string }> = {
+  plant: {
+    label: 'Plantar Semente',
+    icon: <Sprout className="w-4 h-4 text-emerald-600" />,
+    bg: 'bg-emerald-50 hover:bg-emerald-100',
+    text: 'text-emerald-800',
+    border: 'border-emerald-200',
+  },
+  water: {
+    label: 'Regar Canteiro',
+    icon: <Droplets className="w-4 h-4 text-sky-600" />,
+    bg: 'bg-sky-50 hover:bg-sky-100',
+    text: 'text-sky-800',
+    border: 'border-sky-200',
+  },
+  forward: {
+    label: 'Avançar 1 Casa',
+    icon: <ArrowRight className="w-4 h-4 text-blue-600" />,
+    bg: 'bg-blue-50 hover:bg-blue-100',
+    text: 'text-blue-800',
+    border: 'border-blue-200',
+  },
+};
+
 export const LoopModule: React.FC<{ onLevelCompleted: (id: number) => void }> = ({ onLevelCompleted }) => {
   const [level, setLevel] = useState<1 | 2>(1);
 
-  // Level configuration
-  // Level 1: 5 plots in a straight line
-  // Max blocks allowed: 4! (User must use a loop block with repeat 5)
-  const maxAllowedBlocks = level === 1 ? 4 : 5;
-
-  // Program with loop
-  // The loop encapsulates a body of actions
+  // Loop program config
   const [loopIterations, setLoopIterations] = useState<number>(5);
   const [loopBody, setLoopBody] = useState<ActionType[]>(['plant', 'water', 'forward']);
 
-  // Execution state
+  // Simulation state
   const [robotPos, setRobotPos] = useState<GridPos>({ x: 0, y: 0 });
   const [plots, setPlots] = useState<PlotCell[]>([
     { x: 0, y: 0, state: 'soil' },
@@ -72,7 +91,7 @@ export const LoopModule: React.FC<{ onLevelCompleted: (id: number) => void }> = 
       { x: 3, y: 0, state: 'soil' },
       { x: 4, y: 0, state: 'soil' },
     ]);
-    setStatusMessage('Canteiro reiniciado. Pronto para semear!');
+    setStatusMessage('Canteiro limpo e pronto para o plantio automatizado!');
   };
 
   useEffect(() => {
@@ -83,7 +102,7 @@ export const LoopModule: React.FC<{ onLevelCompleted: (id: number) => void }> = 
     if (isRunning) return;
     if (loopBody.length >= 4) {
       sound.failure();
-      setStatusMessage('Máximo de 4 comandos dentro deste laço.');
+      setStatusMessage('Limite atingido: máximo de 4 comandos no interior deste laço.');
       return;
     }
     sound.click();
@@ -96,27 +115,6 @@ export const LoopModule: React.FC<{ onLevelCompleted: (id: number) => void }> = 
     setLoopBody((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // Step execution through the loop
-  const executeStep = (iter: number, subIdx: number) => {
-    if (subIdx >= loopBody.length) {
-      // Move to next iteration
-      const nextIter = iter + 1;
-      if (nextIter >= loopIterations) {
-        // Loop finished!
-        setIsRunning(false);
-        checkCompletion();
-        return;
-      } else {
-        setCurrentLoopIteration(nextIter);
-        setCurrentSubStepIndex(0);
-        executeAction(loopBody[0], nextIter, 0);
-        return;
-      }
-    }
-
-    executeAction(loopBody[subIdx], iter, subIdx);
-  };
-
   const executeAction = (action: ActionType, iter: number, subIdx: number) => {
     setCurrentLoopIteration(iter);
     setCurrentSubStepIndex(subIdx);
@@ -124,11 +122,8 @@ export const LoopModule: React.FC<{ onLevelCompleted: (id: number) => void }> = 
     switch (action) {
       case 'forward': {
         sound.step();
-        setRobotPos((prev) => {
-          const nextX = Math.min(4, prev.x + 1);
-          return { ...prev, x: nextX };
-        });
-        setStatusMessage(`Volta ${iter + 1}/${loopIterations} (Passo ${subIdx + 1}): Robô avançou para o próximo canteiro.`);
+        setRobotPos((prev) => ({ ...prev, x: Math.min(4, prev.x + 1) }));
+        setStatusMessage(`Ciclo ${iter + 1}/${loopIterations} (Passo ${subIdx + 1}): Robô avançou para o próximo canteiro.`);
         break;
       }
 
@@ -142,7 +137,7 @@ export const LoopModule: React.FC<{ onLevelCompleted: (id: number) => void }> = 
             return p;
           })
         );
-        setStatusMessage(`Volta ${iter + 1}/${loopIterations} (Passo ${subIdx + 1}): Semente plantada na terra!`);
+        setStatusMessage(`Ciclo ${iter + 1}/${loopIterations} (Passo ${subIdx + 1}): Semente plantada na terra! 🌱`);
         break;
       }
 
@@ -156,7 +151,7 @@ export const LoopModule: React.FC<{ onLevelCompleted: (id: number) => void }> = 
             return p;
           })
         );
-        setStatusMessage(`Volta ${iter + 1}/${loopIterations} (Passo ${subIdx + 1}): Água aplicada! A planta floresceu!`);
+        setStatusMessage(`Ciclo ${iter + 1}/${loopIterations} (Passo ${subIdx + 1}): Regada com sucesso! A flor desabrochou! 🌻`);
         break;
       }
 
@@ -172,13 +167,30 @@ export const LoopModule: React.FC<{ onLevelCompleted: (id: number) => void }> = 
       triggerConfetti();
       setShowVictory(true);
       onLevelCompleted(level);
-      setStatusMessage('Sucesso maravilhoso! Todas as 5 plantas cresceram usando pouquíssimas instruções!');
+      setStatusMessage('Sucesso maravilhoso! Todas as 5 flores nasceram usando apenas 1 laço!');
     } else {
-      setStatusMessage('O laço terminou, mas algumas plantas não floresceram. Confira se você plantou E regou antes de avançar!');
+      setStatusMessage('O laço terminou, mas faltou plantar ou regar alguns canteiros. Revise a ordem interna!');
     }
   };
 
-  // Continuous execution
+  const executeStep = (iter: number, subIdx: number) => {
+    if (subIdx >= loopBody.length) {
+      const nextIter = iter + 1;
+      if (nextIter >= loopIterations) {
+        setIsRunning(false);
+        checkCompletion();
+        return;
+      } else {
+        setCurrentLoopIteration(nextIter);
+        setCurrentSubStepIndex(0);
+        executeAction(loopBody[0], nextIter, 0);
+        return;
+      }
+    }
+
+    executeAction(loopBody[subIdx], iter, subIdx);
+  };
+
   useEffect(() => {
     if (!isRunning || isPaused) return;
 
@@ -208,84 +220,92 @@ export const LoopModule: React.FC<{ onLevelCompleted: (id: number) => void }> = 
     executeStep(currentLoopIteration, nextSub);
   };
 
-  // Equivalent non-loop block count:
-  const equivalentWithoutLoop = loopIterations * loopBody.length;
+  const theme = MODULE_THEMES.loop;
+  const bloomedCount = plots.filter((p) => p.state === 'bloomed').length;
+  const equivalentSteps = loopIterations * loopBody.length;
 
   return (
     <div className="space-y-6">
-      <TheoryCard
-        title="Repetições e Laços (Loops)"
-        subtitle="Como evitar escrever 100 vezes o mesmo comando"
-        concept="Na programação, nós não escrevemos a mesma instrução dezenas de vezes. Usamos Laços (Loops) para ordenar ao computador: 'Repita este bloco de instruções X vezes'!"
-        analogyTitle="Analogia do Mundo Real:"
-        analogyText="Quando você escova os dentes, ninguém diz 'escove para cima, escove para baixo, escove para cima, escove para baixo...' 50 vezes. Dizemos: 'Repita os movimentos de escovação por 2 minutos'."
-        keyTakeaway="Loops economizam memória, evitam erros humanos de cópia e tornam o algoritmo elegante e poderoso."
+      {/* Module Hero Banner */}
+      <ModuleHero
+        moduleId="loop"
+        title="O Canteiro de Girassóis"
+        subtitle="Cultive todos os 5 canteiros repetindo o mesmo padrão com um único laço de repetição."
+        currentLevel={level}
+        totalLevels={2}
       />
 
+      {/* Main Two-Zone Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Zone: The Garden Visual Stage */}
-        <div className="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-xs">
-            <div className="flex items-center gap-2 text-indigo-400 font-semibold">
-              <Sprout className="w-4 h-4 text-emerald-400" />
-              <span>A Estufa Automatizada do Fazendeiro</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-400">Florescidas:</span>
-              <span className="font-mono text-emerald-400 font-bold">
-                {plots.filter((p) => p.state === 'bloomed').length} / 5
-              </span>
-            </div>
+        {/* Left: The Garden Visual Stage (60%) */}
+        <div className="lg:col-span-7 bg-white rounded-[24px] border border-[#E2E8F0] p-5 sm:p-7 shadow-card-soft space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+            <span className="text-base font-bold text-[#15213D] flex items-center gap-2">
+              🌻 Estufa Automatizada
+            </span>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+              {bloomedCount} de 5 Florescidas
+            </span>
           </div>
 
-          {/* Visual Garden Bed */}
-          <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800/80 min-h-[260px] flex flex-col justify-center items-center">
-            {/* The 5 plots in horizontal row */}
+          {/* Narrative status message */}
+          <div className="flex items-center gap-3 bg-[#FFEDEA] border border-[#FFD0C9] rounded-2xl p-3.5 shadow-2xs">
+            <div className="w-8 h-8 rounded-xl bg-white border border-[#FFD0C9] flex items-center justify-center text-[#F56A5D] shrink-0 shadow-xs">
+              <Repeat className="w-4 h-4" />
+            </div>
+            <p className="text-xs sm:text-sm font-semibold text-[#15213D] leading-snug">
+              {statusMessage}
+            </p>
+          </div>
+
+          {/* Garden Plots Row */}
+          <div className="p-5 sm:p-7 bg-[#F4F9EE] rounded-2xl border border-[#D5E8C4] shadow-inner flex flex-col justify-center items-center min-h-[260px]">
             <div className="grid grid-cols-5 gap-3 w-full max-w-xl">
               {plots.map((plot) => {
                 const isRobotHere = robotPos.x === plot.x;
                 return (
                   <div
                     key={plot.x}
-                    className={`relative h-28 rounded-2xl border-2 flex flex-col items-center justify-between p-2.5 transition-all duration-300 ${
-                      plot.state === 'bloomed'
-                        ? 'bg-emerald-950/40 border-emerald-500/60 shadow-lg shadow-emerald-500/20'
-                        : plot.state === 'seeded'
-                        ? 'bg-amber-950/30 border-amber-500/50'
-                        : 'bg-stone-900/70 border-stone-700/60'
+                    className={`relative h-32 rounded-2xl border-2 flex flex-col items-center justify-between p-3 transition-all duration-300 ${
+                      isRobotHere
+                        ? 'border-coral-400 bg-white ring-4 ring-rose-200 shadow-md scale-105'
+                        : 'border-[#CBD5E1] bg-[#FAF8F5]'
                     }`}
+                    style={{
+                      borderColor: isRobotHere ? '#F56A5D' : undefined,
+                    }}
                   >
-                    {/* Position index */}
-                    <span className="text-[10px] text-slate-500 font-mono self-start">
-                      Canteiro #{plot.x + 1}
+                    {/* Plot number */}
+                    <span className="text-[10px] font-bold text-[#94A3B8]">
+                      #{plot.x + 1}
                     </span>
 
-                    {/* Plot plant graphic */}
-                    <div className="my-auto flex flex-col items-center transition-transform">
-                      {plot.state === 'bloomed' ? (
-                        <div className="flex flex-col items-center animate-bounce">
-                          <span className="text-3xl">🌻</span>
-                          <span className="text-[9px] font-bold text-emerald-300 mt-1">FLORIDA</span>
+                    {/* Crop state */}
+                    <div className="flex flex-col items-center justify-center my-auto">
+                      {plot.state === 'soil' && (
+                        <div className="w-10 h-6 rounded-full bg-[#D4A373]/30 border border-[#D4A373] flex items-center justify-center text-[10px] text-[#A06D08]">
+                          Terra
                         </div>
-                      ) : plot.state === 'seeded' ? (
-                        <div className="flex flex-col items-center">
+                      )}
+                      {plot.state === 'seeded' && (
+                        <div className="flex flex-col items-center animate-pulse">
                           <span className="text-2xl">🌱</span>
-                          <span className="text-[9px] font-bold text-amber-300 mt-1">SEMENTE</span>
+                          <span className="text-[9px] font-bold text-emerald-700">Semente</span>
                         </div>
-                      ) : (
-                        <div className="flex flex-col items-center opacity-60">
-                          <span className="text-2xl">🟫</span>
-                          <span className="text-[9px] text-stone-400 mt-1">TERRA</span>
+                      )}
+                      {plot.state === 'bloomed' && (
+                        <div className="flex flex-col items-center animate-in zoom-in duration-300">
+                          <span className="text-3xl">🌻</span>
+                          <span className="text-[9px] font-bold text-amber-600">Floresceu</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Robot visitor */}
+                    {/* Robot Position Marker */}
                     {isRobotHere && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
-                        <div className="px-2 py-0.5 rounded-full bg-indigo-600 border border-indigo-300 text-white text-[10px] font-bold flex items-center gap-1 shadow-md animate-pulse">
-                          <span>🤖</span> Robô
-                        </div>
+                      <div className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-[#F56A5D] border border-rose-200">
+                        <Bot className="w-3 h-3" />
+                        <span>Aqui</span>
                       </div>
                     )}
                   </div>
@@ -294,172 +314,179 @@ export const LoopModule: React.FC<{ onLevelCompleted: (id: number) => void }> = 
             </div>
           </div>
 
-          {/* Real-time Narrative Status Bar */}
-          <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-xl flex items-center justify-between text-xs text-slate-300 font-mono">
-            <span className="truncate">{statusMessage}</span>
-            <div className="text-indigo-400 font-bold shrink-0">
-              Iteração: {currentLoopIteration + 1} / {loopIterations}
-            </div>
-          </div>
-
-          {/* Execution Controls */}
+          {/* Playback Controls */}
           <ExecutionControls
             isRunning={isRunning}
             isPaused={isPaused}
             currentStepIndex={currentLoopIteration * loopBody.length + currentSubStepIndex}
-            totalSteps={loopIterations * loopBody.length}
+            totalSteps={equivalentSteps}
             speed={speed}
             onPlay={handleStartPlay}
             onPause={() => setIsPaused(true)}
             onStepForward={handleStepForward}
             onReset={resetState}
             onSpeedChange={setSpeed}
+            primaryColor={theme.primary}
           />
         </div>
 
-        {/* Right Zone: The Loop Block Assembler */}
+        {/* Right: The Loop Assembler (40%) */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <span className="text-xs font-bold text-white uppercase tracking-wider">
-                Montador do Laço de Repetição
-              </span>
-              <span className="text-[10px] text-indigo-400 font-mono">ECONOMIA DE CÓDIGO</span>
+          <div className="bg-white rounded-[24px] border border-[#E2E8F0] p-5 sm:p-6 shadow-card-soft space-y-4">
+            <div className="border-b border-[#E2E8F0] pb-2">
+              <h3 className="text-base font-bold text-[#15213D] flex items-center gap-1.5">
+                🔁 Estrutura do Laço (Loop)
+              </h3>
+              <p className="text-xs text-[#536178]">
+                Defina quantas vezes repetir e quais ações executar por ciclo
+              </p>
             </div>
 
-            {/* Loop Container Visual */}
-            <div className="p-4 rounded-2xl bg-indigo-950/20 border-2 border-indigo-500/50 space-y-3 relative">
-              {/* Loop Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-indigo-300 font-bold text-xs">
-                  <Repeat className="w-4 h-4 text-indigo-400" />
-                  <span>REPITA</span>
-                </div>
+            {/* Loop Container Representation */}
+            <div className="bg-[#FFEDEA] border-2 border-[#F56A5D] rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs">
+              {/* Loop repetition selector */}
+              <div className="flex items-center justify-between bg-white rounded-xl p-2.5 border border-[#FFD0C9]">
+                <span className="text-xs font-bold text-[#15213D] flex items-center gap-1.5">
+                  <Repeat className="w-4 h-4 text-[#F56A5D]" />
+                  Repetir este bloco:
+                </span>
 
-                {/* Iterations selector */}
-                <div className="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded-lg border border-slate-700">
-                  <select
-                    value={loopIterations}
-                    onChange={(e) => {
-                      sound.click();
-                      setLoopIterations(Number(e.target.value));
-                    }}
-                    disabled={isRunning}
-                    className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
-                  >
-                    {[1, 2, 3, 4, 5, 6].map((num) => (
-                      <option key={num} value={num} className="bg-slate-900">
-                        {num}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-[11px] text-slate-400 font-semibold">VEZES:</span>
+                <div className="flex items-center gap-1">
+                  {[3, 4, 5].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => {
+                        sound.click();
+                        setLoopIterations(num);
+                      }}
+                      disabled={isRunning}
+                      className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        loopIterations === num
+                          ? 'bg-[#F56A5D] text-white shadow-xs'
+                          : 'bg-[#F8FAFD] text-[#536178] hover:bg-slate-100'
+                      }`}
+                    >
+                      {num}x
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Loop body slots (the actions repeated) */}
-              <div className="ml-3 pl-3 border-l-2 border-indigo-500/40 space-y-2 py-1">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-300 block">
-                  Ações Repetidas a Cada Volta:
+              {/* Inside body of loop */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-rose-800 block">
+                  Ações executadas em cada volta:
                 </span>
 
-                {loopBody.map((action, idx) => {
-                  const isCurrentSub = isRunning && currentSubStepIndex === idx;
-                  return (
-                    <div
-                      key={idx}
-                      className={`flex items-center justify-between p-2 rounded-lg border text-xs transition-all ${
-                        isCurrentSub
-                          ? 'bg-indigo-600/40 border-indigo-400 text-white shadow-md translate-x-1'
-                          : 'bg-slate-800 border-slate-700 text-slate-200'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="w-4 h-4 rounded-full bg-slate-700 text-[10px] flex items-center justify-center font-mono">
-                          {idx + 1}
-                        </span>
-                        <span className="font-medium">
-                          {action === 'plant' && '🌱 Plantar Semente'}
-                          {action === 'water' && '💧 Regar Canteiro'}
-                          {action === 'forward' && '➡️ Avançar 1 Canteiro'}
-                        </span>
-                      </div>
+                {loopBody.length === 0 ? (
+                  <div className="p-4 text-center border-2 border-dashed border-[#FFD0C9] rounded-xl bg-white/70 text-xs text-[#8491A5]">
+                    Adicione ações abaixo para rodar no laço
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {loopBody.map((action, idx) => {
+                      const info = ACTION_INFO[action];
+                      const isSubActive = currentSubStepIndex === idx && isRunning;
+                      return (
+                        <div
+                          key={idx}
+                          className={`flex items-center justify-between p-2.5 rounded-xl border text-xs font-bold transition-all ${
+                            isSubActive
+                              ? 'bg-rose-500 text-white border-rose-600 shadow-sm translate-x-1'
+                              : 'bg-white border-[#FFD0C9] text-[#15213D]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
+                              isSubActive ? 'bg-white text-rose-600' : 'bg-rose-100 text-rose-800'
+                            }`}>
+                              {idx + 1}
+                            </span>
+                            <span>{info.label}</span>
+                          </div>
 
-                      <button
-                        onClick={() => removeActionFromBody(idx)}
-                        disabled={isRunning}
-                        className="text-slate-500 hover:text-rose-400 p-1 cursor-pointer disabled:opacity-40"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  );
-                })}
-
-                {loopBody.length === 0 && (
-                  <p className="text-xs text-rose-300 italic">O corpo do laço está vazio! Adicione ações abaixo.</p>
+                          <button
+                            onClick={() => removeActionFromBody(idx)}
+                            disabled={isRunning}
+                            className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer disabled:opacity-40"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
 
-              <div className="text-[10px] text-indigo-400 font-mono text-right">
-                ↺ Fim do laço (retorna ao topo)
+              {/* Add Action Buttons */}
+              <div className="pt-2 border-t border-[#FFD0C9] space-y-2">
+                <span className="text-[11px] font-bold text-[#536178]">
+                  Clique para inserir no laço:
+                </span>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    onClick={() => addActionToBody('plant')}
+                    disabled={isRunning || loopBody.length >= 4}
+                    className="p-2 bg-white hover:bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] font-bold text-emerald-800 flex flex-col items-center gap-1 cursor-pointer transition-all disabled:opacity-40"
+                  >
+                    <Sprout className="w-4 h-4 text-emerald-600" />
+                    <span>Plantar</span>
+                  </button>
+
+                  <button
+                    onClick={() => addActionToBody('water')}
+                    disabled={isRunning || loopBody.length >= 4}
+                    className="p-2 bg-white hover:bg-sky-50 border border-sky-200 rounded-xl text-[11px] font-bold text-sky-800 flex flex-col items-center gap-1 cursor-pointer transition-all disabled:opacity-40"
+                  >
+                    <Droplets className="w-4 h-4 text-sky-600" />
+                    <span>Regar</span>
+                  </button>
+
+                  <button
+                    onClick={() => addActionToBody('forward')}
+                    disabled={isRunning || loopBody.length >= 4}
+                    className="p-2 bg-white hover:bg-blue-50 border border-blue-200 rounded-xl text-[11px] font-bold text-blue-800 flex flex-col items-center gap-1 cursor-pointer transition-all disabled:opacity-40"
+                  >
+                    <ArrowRight className="w-4 h-4 text-blue-600" />
+                    <span>Avançar</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Quick action buttons to insert into loop body */}
-            <div className="space-y-2">
-              <span className="text-[11px] font-semibold text-slate-400 block">
-                Adicionar ação ao laço:
+            {/* Smart efficiency metric badge */}
+            <div className="flex items-center gap-2 bg-[#F8FAFD] border border-[#E2E8F0] p-3 rounded-xl text-xs text-[#536178]">
+              <Layers className="w-4 h-4 text-rose-500 shrink-0" />
+              <span>
+                Este laço executa <strong>{equivalentSteps} instruções</strong> escrevendo apenas <strong>{loopBody.length} comandos</strong>!
               </span>
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <button
-                  onClick={() => addActionToBody('plant')}
-                  disabled={isRunning}
-                  className="p-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 font-medium text-center cursor-pointer disabled:opacity-40"
-                >
-                  🌱 Plantar
-                </button>
-                <button
-                  onClick={() => addActionToBody('water')}
-                  disabled={isRunning}
-                  className="p-2 rounded-lg bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/40 text-sky-300 font-medium text-center cursor-pointer disabled:opacity-40"
-                >
-                  💧 Regar
-                </button>
-                <button
-                  onClick={() => addActionToBody('forward')}
-                  disabled={isRunning}
-                  className="p-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 font-medium text-center cursor-pointer disabled:opacity-40"
-                >
-                  ➡️ Avançar
-                </button>
-              </div>
             </div>
 
-            {/* Algorithmic Efficiency Comparison Card */}
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-2">
-              <div className="flex items-center justify-between text-slate-300 font-semibold">
-                <span className="flex items-center gap-1.5 text-amber-400">
-                  <Zap className="w-3.5 h-3.5" />
-                  Poder do Laço:
-                </span>
-                <span className="font-mono text-emerald-400">
-                  {loopBody.length + 1} blocos usados
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Sem o laço de repetição, você teria que arrastar manualmente{' '}
-                <span className="text-white font-bold">{equivalentWithoutLoop}</span> blocos individuais na sequência!
-              </p>
-            </div>
+            {/* Hint Card */}
+            <HintCard hint="Para cada canteiro, o robô deve Plantar, depois Regar para florir, e por fim Avançar para o próximo canteiro!" />
           </div>
         </div>
       </div>
 
+      {/* Pedagogical "Por que isso funciona?" Block */}
+      <LearningInsight
+        title="Por que laços evitam repetição inútil?"
+        explanation="Escrever o mesmo comando dezenas de vezes é cansativo e gera muitos erros. Com um Laço (Loop), ensinamos o padrão uma única vez e o computador o repete com perfeição quantas vezes forem necessárias!"
+        analogy="Quando você escova os dentes, ninguém diz 'escove para cima, escove para baixo' 100 vezes. Nós simplesmente dizemos: 'Repita os movimentos de escovação por 2 minutos'."
+        accentColor={theme.primary}
+        pillars={[
+          { title: 'Iteração', description: 'Cada repetição completa das instruções é chamada de uma iteração do laço.' },
+          { title: 'Economia de Código', description: 'Transforma centenas de linhas repetitivas em um bloco pequeno e elegante.' },
+          { title: 'Automação Escalável', description: 'O mesmo algoritmo cuida de 5 canteiros ou de 5.000 canteiros!' },
+        ]}
+      />
+
+      {/* Victory Celebration Modal */}
       <VictoryModal
         isOpen={showVictory}
-        title="Colheita Automatizada Perfeita!"
-        explanation="Você usou um Laço de Repetição! O computador repetiu o trio de ações (Plantar, Regar, Avançar) para todos os canteiros, economizando muito esforço e tornando a lógica imbatível."
+        title="Colheita Automatizada com Sucesso!"
+        explanation="Você descobriu o padrão que precisava se repetir (Plantar -> Regar -> Avançar) e o colocou dentro de um laço de 5 voltas. Todas as flores nasceram com elegância!"
         hasNextLevel={false}
         onRestart={() => {
           setShowVictory(false);

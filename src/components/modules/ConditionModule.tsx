@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   GitFork, 
   Sparkles, 
@@ -6,15 +6,19 @@ import {
   RotateCcw, 
   CheckCircle2, 
   AlertCircle,
-  HelpCircle,
   Eye,
   Sliders,
-  ArrowRight
+  StepForward,
+  Check,
+  X
 } from 'lucide-react';
 import { sound } from '../../utils/sound';
 import { triggerConfetti } from '../../utils/confetti';
-import { TheoryCard } from '../TheoryCard';
+import { ModuleHero } from '../ModuleHero';
+import { HintCard } from '../HintCard';
+import { LearningInsight } from '../LearningInsight';
 import { VictoryModal } from '../VictoryModal';
+import { MODULE_THEMES } from '../../designTokens';
 
 interface GemItem {
   id: number;
@@ -24,14 +28,6 @@ interface GemItem {
   weight: 'light' | 'heavy';
   weightName: string;
   icon: string;
-}
-
-interface ConditionRule {
-  property: 'color' | 'weight';
-  operator: 'equals';
-  value: string;
-  targetTubeIfTrue: 'A' | 'B';
-  targetTubeIfFalse: 'A' | 'B';
 }
 
 const SAMPLE_GEMS: GemItem[] = [
@@ -52,14 +48,14 @@ export const ConditionModule: React.FC<{ onLevelCompleted: (id: number) => void 
   const [trueTube, setTrueTube] = useState<'A' | 'B'>('A');
   const [falseTube, setFalseTube] = useState<'A' | 'B'>('B');
 
-  // Conveyor test simulation state
+  // Conveyor simulation state
   const [itemsQueue, setItemsQueue] = useState<GemItem[]>(SAMPLE_GEMS);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [activeBranch, setActiveBranch] = useState<'none' | 'true' | 'false'>('none');
   const [isProcessing, setIsProcessing] = useState(false);
   const [autoRun, setAutoRun] = useState(false);
 
-  // Tally & stats
+  // Results
   const [tubeACount, setTubeACount] = useState<GemItem[]>([]);
   const [tubeBCount, setTubeBCount] = useState<GemItem[]>([]);
   const [correctCount, setCorrectCount] = useState(0);
@@ -67,14 +63,9 @@ export const ConditionModule: React.FC<{ onLevelCompleted: (id: number) => void 
   const [statusLog, setStatusLog] = useState<string>('Configure a regra SE / SENÃO e teste os itens na esteira.');
   const [showVictory, setShowVictory] = useState(false);
 
-  // Challenge goals:
-  // Level 1: Enviar todos os itens vermelhos (Rubis) para o Tubo A e os demais para o Tubo B.
-  // Level 2: Enviar itens "Pesados" para o Tubo A e itens "Leves" para o Tubo B.
-  const targetProperty = level === 1 ? 'color' : 'weight';
-  const targetValue = level === 1 ? 'red' : 'heavy';
   const targetGoalDesc = level === 1 
-    ? 'Meta: Separe todas as joias VERMELHAS no Tubo A e todas as outras no Tubo B.'
-    : 'Meta: Separe todos os itens PESADOS no Tubo A e todos os LEVES no Tubo B.';
+    ? 'Separe todas as joias VERMELHAS no Tubo A e as demais no Tubo B.'
+    : 'Separe todos os itens PESADOS no Tubo A e os LEVES no Tubo B.';
 
   const resetSimulation = () => {
     setCurrentIndex(0);
@@ -114,7 +105,6 @@ export const ConditionModule: React.FC<{ onLevelCompleted: (id: number) => void 
     const item = itemsQueue[currentIndex];
     setIsProcessing(true);
 
-    // Evaluate user condition
     const conditionResult = evaluateItem(item);
     sound.condition(conditionResult);
     setActiveBranch(conditionResult ? 'true' : 'false');
@@ -133,13 +123,13 @@ export const ConditionModule: React.FC<{ onLevelCompleted: (id: number) => void 
         sound.collect();
         setCorrectCount((prev) => prev + 1);
         setStatusLog(
-          `Sensor leu [${item.name}]: Condição deu ${conditionResult ? 'VERDADEIRO' : 'FALSO'}. Enviado para Tubo ${destinationTube} com sucesso!`
+          `Sensor leu [${item.name}]: Condição deu ${conditionResult ? 'VERDADEIRO' : 'FALSO'}. Enviado para Tubo ${destinationTube} com sucesso! ✨`
         );
       } else {
         sound.failure();
         setWrongCount((prev) => prev + 1);
         setStatusLog(
-          `Opa! [${item.name}] caiu no Tubo ${destinationTube}, mas a meta exigia o outro tubo. Ajuste sua lógica!`
+          `Opa! [${item.name}] foi parar no Tubo ${destinationTube}, mas a regra da missão pedia o outro tubo. Ajuste os blocos!`
         );
       }
 
@@ -148,7 +138,6 @@ export const ConditionModule: React.FC<{ onLevelCompleted: (id: number) => void 
       setIsProcessing(false);
 
       if (nextIdx >= itemsQueue.length) {
-        // Finished all items
         setAutoRun(false);
         const finalCorrect = isCorrect ? correctCount + 1 : correctCount;
         if (finalCorrect === itemsQueue.length) {
@@ -157,13 +146,12 @@ export const ConditionModule: React.FC<{ onLevelCompleted: (id: number) => void 
           setShowVictory(true);
           onLevelCompleted(level);
         } else {
-          setStatusLog(`Teste concluído: ${finalCorrect} de ${itemsQueue.length} corretos. Tente ajustar os parâmetros!`);
+          setStatusLog(`Teste finalizado: ${finalCorrect} de ${itemsQueue.length} corretos. Ajuste a condição para acertar 100%!`);
         }
       }
     }, 600);
   };
 
-  // Auto-run effect
   useEffect(() => {
     if (!autoRun || isProcessing || currentIndex >= itemsQueue.length) return;
 
@@ -175,171 +163,185 @@ export const ConditionModule: React.FC<{ onLevelCompleted: (id: number) => void 
   }, [autoRun, isProcessing, currentIndex]);
 
   const currentItem = currentIndex < itemsQueue.length ? itemsQueue[currentIndex] : null;
+  const theme = MODULE_THEMES.condition;
 
   return (
     <div className="space-y-6">
-      <TheoryCard
-        title="Decisões e Condicionais"
-        subtitle={`Nível ${level}: O Poder do SE / SENÃO`}
-        concept="Em programação, um computador não pode seguir apenas passos fixos quando o ambiente muda. Ele faz perguntas: SE algo for verdadeiro, toma um caminho; SENÃO, toma outro caminho."
-        analogyTitle="Analogia do Mundo Real:"
-        analogyText="Imagine um guarda-chuva: SE estiver chovendo lá fora, ENTÃO você abre o guarda-chuva; SENÃO, você o deixa guardado na mochila. Você não abre o guarda-chuva todos os dias sem olhar para o céu!"
-        keyTakeaway="Toda decisão computacional é uma bifurcação binária: Verdadeiro ou Falso. Isso permite criar inteligência e adaptação."
+      {/* Module Hero Banner */}
+      <ModuleHero
+        moduleId="condition"
+        title={level === 1 ? 'A Esteira de Triagem' : 'O Sensor de Densidade'}
+        subtitle={targetGoalDesc}
+        currentLevel={level}
+        totalLevels={2}
       />
 
       {/* Main Two-Zone Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left: Conveyor & Visual Sorter Stage */}
-        <div className="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-xs">
-            <div className="flex items-center gap-2 text-indigo-400 font-semibold">
-              <GitFork className="w-4 h-4" />
-              <span>A Esteira de Triagem Automatizada</span>
-            </div>
-            <span className="text-xs text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-              {targetGoalDesc}
+        {/* Left: Conveyor & Visual Stage (60%) */}
+        <div className="lg:col-span-7 bg-white rounded-[24px] border border-[#E2E8F0] p-5 sm:p-7 shadow-card-soft space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+            <span className="text-base font-bold text-[#15213D] flex items-center gap-2">
+              ⚙️ Esteira de Triagem Automatizada
+            </span>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+              {correctCount} de {itemsQueue.length} classificados
             </span>
           </div>
 
-          {/* Interactive Conveyor Graphic */}
-          <div className="relative bg-slate-950 p-6 rounded-2xl border border-slate-800/80 overflow-hidden min-h-[300px] flex flex-col justify-between">
-            {/* Top: Arrival conveyor belt */}
-            <div className="relative flex items-center justify-between bg-slate-900/70 p-3 rounded-xl border border-slate-800">
-              <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                Esteira de Entrada
-              </span>
-              <div className="flex items-center gap-2 overflow-hidden">
+          {/* Narrative status message */}
+          <div className="flex items-center gap-3 bg-[#F0EBFF] border border-[#D8CCFF] rounded-2xl p-3.5 shadow-2xs">
+            <div className="w-8 h-8 rounded-xl bg-white border border-[#D8CCFF] flex items-center justify-center text-purple-700 shrink-0 shadow-xs">
+              <Eye className="w-4 h-4" />
+            </div>
+            <p className="text-xs sm:text-sm font-semibold text-[#15213D] leading-snug">
+              {statusLog}
+            </p>
+          </div>
+
+          {/* Physical Conveyor Simulation Deck */}
+          <div className="bg-[#F8FAFD] rounded-2xl border border-[#E2E8F0] p-5 sm:p-6 space-y-6 shadow-inner">
+            {/* Top Queue: Arrival Belt */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#8491A5]">
+                  Fila de Itens na Entrada
+                </span>
+                <span className="text-xs font-semibold text-[#536178]">
+                  Restantes: {Math.max(0, itemsQueue.length - currentIndex)}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2.5 p-3 bg-white rounded-2xl border border-[#E2E8F0] overflow-x-auto min-h-[64px]">
                 {itemsQueue.slice(currentIndex).map((item, i) => (
                   <div
                     key={item.id}
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg border transition-all ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all shrink-0 ${
                       i === 0
-                        ? 'bg-indigo-600/30 border-indigo-400 scale-110 shadow-lg shadow-indigo-500/30'
-                        : 'bg-slate-800/50 border-slate-700/40 opacity-60'
+                        ? 'bg-purple-50 border-purple-400 ring-2 ring-purple-200 shadow-sm'
+                        : 'bg-[#F8FAFD] border-[#E2E8F0] opacity-75'
                     }`}
                   >
-                    <span>{item.icon}</span>
+                    <span className="text-lg">{item.icon}</span>
+                    <div className="text-left">
+                      <span className="text-xs font-bold text-[#15213D] block leading-tight">{item.name}</span>
+                      <span className="text-[10px] text-[#8491A5]">
+                        {item.colorName} • {item.weightName}
+                      </span>
+                    </div>
                   </div>
                 ))}
                 {currentIndex >= itemsQueue.length && (
-                  <span className="text-xs text-slate-500 italic">Todos os itens foram processados!</span>
+                  <div className="w-full text-center py-2 text-xs font-semibold text-emerald-600 flex items-center justify-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Todos os itens foram triados!</span>
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Middle: The Decision Sensor Chamber */}
-            <div className="my-6 relative flex flex-col items-center">
-              <div
-                className={`w-full max-w-sm p-4 rounded-xl border transition-all duration-300 ${
-                  activeBranch !== 'none'
-                    ? 'bg-indigo-950/40 border-indigo-500 shadow-xl shadow-indigo-500/20'
-                    : 'bg-slate-900 border-slate-700'
-                }`}
-              >
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <div className="flex items-center gap-1.5 text-indigo-300 font-bold">
-                    <Eye className="w-4 h-4 text-indigo-400" />
-                    <span>SENSOR DE DECISÃO</span>
-                  </div>
-                  {currentItem ? (
-                    <span className="text-[11px] font-mono text-amber-300">
-                      Lendo: {currentItem.name}
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-slate-500 font-mono">Aguardando item...</span>
-                  )}
-                </div>
-
-                {/* Live comparison logic preview */}
-                <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono space-y-1">
-                  <div className="flex items-center gap-1 text-slate-300">
-                    <span className="text-purple-400 font-bold">SE</span>
-                    <span className="text-sky-300">[{ruleProperty === 'color' ? 'Cor do item' : 'Peso do item'}]</span>
-                    <span className="text-slate-400">é igual a</span>
-                    <span className="text-amber-300">"{ruleProperty === 'color' ? (ruleValue === 'red' ? 'Vermelho' : ruleValue === 'blue' ? 'Azul' : 'Verde') : (ruleValue === 'heavy' ? 'Pesado' : 'Leve')}"</span>
-                  </div>
-                  {currentItem && (
-                    <div className="text-[11px] text-slate-400 pt-1 border-t border-slate-800/80 flex items-center justify-between">
-                      <span>Valor atual do item:</span>
-                      <span className="font-semibold text-white">
-                        {ruleProperty === 'color' ? currentItem.colorName : currentItem.weightName}
-                      </span>
-                    </div>
-                  )}
-                </div>
+            {/* Middle: Decision Laser Sensor */}
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 shadow-xs relative">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1.5">
+                  <Eye className="w-4 h-4 text-purple-600" />
+                  Sensor de Inspeção
+                </span>
+                {currentItem ? (
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200">
+                    Examinando: {currentItem.name}
+                  </span>
+                ) : (
+                  <span className="text-xs text-[#8491A5]">Aguardando próximo item...</span>
+                )}
               </div>
 
-              {/* Glowing decision branches */}
-              <div className="w-full max-w-md flex justify-between items-center px-8 mt-2 text-xs font-bold">
-                <div
-                  className={`flex flex-col items-center p-2 rounded-lg border transition-all ${
+              {/* Branch Light Indicators */}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div 
+                  className={`p-3 rounded-xl border text-center transition-all ${
                     activeBranch === 'true'
-                      ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 shadow-md shadow-emerald-500/20 scale-105'
-                      : 'border-slate-800 text-slate-500'
+                      ? 'bg-emerald-50 border-emerald-400 text-emerald-800 ring-2 ring-emerald-200 font-bold scale-[1.02]'
+                      : 'bg-[#F8FAFD] border-[#E2E8F0] text-[#8491A5]'
                   }`}
                 >
-                  <span>✓ VERDADEIRO</span>
-                  <span className="text-[10px] font-normal text-slate-400">Ir para Tubo {trueTube}</span>
+                  <div className="flex items-center justify-center gap-1 text-xs font-bold mb-0.5">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>SE FOR VERDADE</span>
+                  </div>
+                  <span className="text-xs block font-semibold text-emerald-700">
+                    Desviar para Tubo {trueTube}
+                  </span>
                 </div>
 
-                <div
-                  className={`flex flex-col items-center p-2 rounded-lg border transition-all ${
+                <div 
+                  className={`p-3 rounded-xl border text-center transition-all ${
                     activeBranch === 'false'
-                      ? 'bg-rose-950/60 border-rose-500 text-rose-300 shadow-md shadow-rose-500/20 scale-105'
-                      : 'border-slate-800 text-slate-500'
+                      ? 'bg-rose-50 border-rose-400 text-rose-800 ring-2 ring-rose-200 font-bold scale-[1.02]'
+                      : 'bg-[#F8FAFD] border-[#E2E8F0] text-[#8491A5]'
                   }`}
                 >
-                  <span>✗ FALSO</span>
-                  <span className="text-[10px] font-normal text-slate-400">Ir para Tubo {falseTube}</span>
+                  <div className="flex items-center justify-center gap-1 text-xs font-bold mb-0.5">
+                    <X className="w-3.5 h-3.5" />
+                    <span>SENÃO (FALSO)</span>
+                  </div>
+                  <span className="text-xs block font-semibold text-rose-700">
+                    Desviar para Tubo {falseTube}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Bottom: Destination Tubes */}
+            {/* Bottom: Destination Tubes A & B */}
             <div className="grid grid-cols-2 gap-4">
               {/* Tube A */}
-              <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-2">
-                <div className="flex items-center justify-between font-bold text-slate-300 border-b border-slate-800 pb-1">
-                  <span>Tubo A</span>
-                  <span className="text-[10px] text-slate-500 font-mono">({tubeACount.length} itens)</span>
+              <div className="bg-white rounded-2xl border border-blue-200 p-4 shadow-2xs">
+                <div className="flex items-center justify-between pb-2 border-b border-blue-100 mb-2">
+                  <span className="text-xs font-bold text-blue-800 uppercase tracking-wider">
+                    Recipiente Tubo A
+                  </span>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                    {tubeACount.length}
+                  </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5 min-h-[36px]">
-                  {tubeACount.map((item, idx) => (
-                    <span key={idx} className="text-base" title={`${item.name} (${item.colorName}, ${item.weightName})`}>
-                      {item.icon}
+                <div className="flex flex-wrap gap-1.5 min-h-[48px] items-center">
+                  {tubeACount.map((gem, idx) => (
+                    <span key={idx} className="text-xl animate-in zoom-in" title={gem.name}>
+                      {gem.icon}
                     </span>
                   ))}
+                  {tubeACount.length === 0 && (
+                    <span className="text-xs text-[#8491A5] italic">Vazio</span>
+                  )}
                 </div>
               </div>
 
               {/* Tube B */}
-              <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-2">
-                <div className="flex items-center justify-between font-bold text-slate-300 border-b border-slate-800 pb-1">
-                  <span>Tubo B</span>
-                  <span className="text-[10px] text-slate-500 font-mono">({tubeBCount.length} itens)</span>
+              <div className="bg-white rounded-2xl border border-purple-200 p-4 shadow-2xs">
+                <div className="flex items-center justify-between pb-2 border-b border-purple-100 mb-2">
+                  <span className="text-xs font-bold text-purple-800 uppercase tracking-wider">
+                    Recipiente Tubo B
+                  </span>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
+                    {tubeBCount.length}
+                  </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5 min-h-[36px]">
-                  {tubeBCount.map((item, idx) => (
-                    <span key={idx} className="text-base" title={`${item.name} (${item.colorName}, ${item.weightName})`}>
-                      {item.icon}
+                <div className="flex flex-wrap gap-1.5 min-h-[48px] items-center">
+                  {tubeBCount.map((gem, idx) => (
+                    <span key={idx} className="text-xl animate-in zoom-in" title={gem.name}>
+                      {gem.icon}
                     </span>
                   ))}
+                  {tubeBCount.length === 0 && (
+                    <span className="text-xs text-[#8491A5] italic">Vazio</span>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Real-time Narrative Status Bar */}
-          <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-xl flex items-center justify-between text-xs text-slate-300 font-mono">
-            <span className="truncate">{statusLog}</span>
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-emerald-400 font-bold">Acertos: {correctCount}</span>
-              <span className="text-rose-400 font-bold">Erros: {wrongCount}</span>
-            </div>
-          </div>
-
-          {/* Action trigger buttons */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-900 border border-slate-800 rounded-xl">
+          {/* Controls Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white border border-[#E2E8F0] rounded-2xl shadow-card-soft">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
@@ -347,10 +349,10 @@ export const ConditionModule: React.FC<{ onLevelCompleted: (id: number) => void 
                   stepItem();
                 }}
                 disabled={isProcessing || currentIndex >= itemsQueue.length}
-                className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold rounded-lg shadow-md cursor-pointer disabled:opacity-40"
+                className="flex items-center gap-2 px-4 py-2.5 bg-[#8057E8] hover:bg-purple-700 active:scale-95 text-white text-sm font-bold rounded-xl shadow-md shadow-purple-500/25 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <ArrowRight className="w-4 h-4" />
-                <span>Testar Próximo Item</span>
+                <StepForward className="w-4 h-4" />
+                <span>Testar 1 Peça</span>
               </button>
 
               <button
@@ -359,14 +361,14 @@ export const ConditionModule: React.FC<{ onLevelCompleted: (id: number) => void 
                   setAutoRun(!autoRun);
                 }}
                 disabled={currentIndex >= itemsQueue.length}
-                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl border transition-all cursor-pointer ${
                   autoRun
-                    ? 'bg-amber-500 text-slate-950 border-amber-400'
-                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                    ? 'bg-amber-500 text-white border-amber-600'
+                    : 'bg-[#F8FAFD] hover:bg-slate-100 text-[#15213D] border-[#CBD5E1]'
                 }`}
               >
-                <Play className="w-3.5 h-3.5" />
-                <span>{autoRun ? 'Pausar Automático' : 'Executar Todos'}</span>
+                <Play className="w-4 h-4" />
+                <span>{autoRun ? 'Pausar' : 'Testar Fila Toda'}</span>
               </button>
             </div>
 
@@ -375,181 +377,182 @@ export const ConditionModule: React.FC<{ onLevelCompleted: (id: number) => void 
                 sound.click();
                 resetSimulation();
               }}
-              className="flex items-center gap-1 px-3 py-2 text-xs text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer"
+              title="Reiniciar esteira"
+              className="p-2.5 bg-[#F8FAFD] hover:bg-slate-100 text-[#536178] hover:text-[#15213D] rounded-xl border border-[#CBD5E1] transition-all cursor-pointer"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reiniciar Esteira</span>
+              <RotateCcw className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Right: The Condition Puzzle Builder Deck */}
+        {/* Right: Rule Builder Deck (40%) */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <span className="text-xs font-bold text-white uppercase tracking-wider">
-                Montador Visual de Condição
-              </span>
-              <span className="text-[10px] text-indigo-400 font-mono">SE / SENÃO</span>
+          <div className="bg-white rounded-[24px] border border-[#E2E8F0] p-5 sm:p-6 shadow-card-soft space-y-4">
+            <div className="border-b border-[#E2E8F0] pb-2">
+              <h3 className="text-base font-bold text-[#15213D] flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-purple-600" />
+                Configure o Bloco Condicional
+              </h3>
+              <p className="text-xs text-[#536178]">
+                Ajuste os parâmetros da regra de decisão lógica
+              </p>
             </div>
 
-            {/* Visual Block Formatter */}
-            <div className="space-y-4 text-xs">
-              {/* IF Condition block */}
-              <div className="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-500/40 space-y-3">
-                <div className="flex items-center gap-2 font-bold text-indigo-300">
-                  <span className="px-2 py-0.5 rounded bg-indigo-600 text-white text-[11px]">SE</span>
-                  <span>(A condição que o sensor irá testar)</span>
-                </div>
+            {/* Block Representation */}
+            <div className="bg-[#F0EBFF] border-2 border-[#8057E8] rounded-2xl p-4 sm:p-5 space-y-3 shadow-xs">
+              <div className="text-xs font-bold text-purple-900 uppercase tracking-wider flex items-center gap-1.5">
+                <GitFork className="w-4 h-4" />
+                Bloco: SE / ENTÃO / SENÃO
+              </div>
 
+              {/* SE (Condição) */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-purple-950 block">
+                  1. O que o sensor deve verificar?
+                </label>
                 <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[11px] text-slate-400 block mb-1">Qual característica testar?</label>
-                    <select
-                      value={ruleProperty}
-                      onChange={(e) => {
-                        sound.click();
-                        const p = e.target.value as 'color' | 'weight';
-                        setRuleProperty(p);
-                        setRuleValue(p === 'color' ? 'red' : 'heavy');
-                      }}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
-                    >
-                      <option value="color">Cor da Joia</option>
-                      <option value="weight">Peso da Joia</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] text-slate-400 block mb-1">Deve ser igual a:</label>
-                    <select
-                      value={ruleValue}
-                      onChange={(e) => {
-                        sound.click();
-                        setRuleValue(e.target.value);
-                      }}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
-                    >
-                      {ruleProperty === 'color' ? (
-                        <>
-                          <option value="red">Vermelho (Rubi)</option>
-                          <option value="blue">Azul (Safira)</option>
-                          <option value="green">Verde (Esmeralda)</option>
-                        </>
-                      ) : (
-                        <>
-                          <option value="heavy">Pesado</option>
-                          <option value="light">Leve</option>
-                        </>
-                      )}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* THEN Branch */}
-              <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-emerald-400">
-                    <span className="px-2 py-0.5 rounded bg-emerald-600 text-white text-[11px]">ENTÃO</span>
-                    <span>Se for Verdadeiro:</span>
-                  </div>
                   <select
-                    value={trueTube}
+                    value={ruleProperty}
                     onChange={(e) => {
                       sound.click();
-                      setTrueTube(e.target.value as 'A' | 'B');
+                      const val = e.target.value as 'color' | 'weight';
+                      setRuleProperty(val);
+                      setRuleValue(val === 'color' ? 'red' : 'heavy');
                     }}
-                    className="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 focus:outline-none cursor-pointer"
+                    className="p-2.5 bg-white border border-purple-200 rounded-xl text-xs font-bold text-[#15213D] focus:outline-none focus:ring-2 focus:ring-purple-400 cursor-pointer"
                   >
-                    <option value="A">Enviar para Tubo A</option>
-                    <option value="B">Enviar para Tubo B</option>
+                    <option value="color">Cor da Joia</option>
+                    <option value="weight">Peso do Item</option>
+                  </select>
+
+                  <select
+                    value={ruleValue}
+                    onChange={(e) => {
+                      sound.click();
+                      setRuleValue(e.target.value);
+                    }}
+                    className="p-2.5 bg-white border border-purple-200 rounded-xl text-xs font-bold text-[#15213D] focus:outline-none focus:ring-2 focus:ring-purple-400 cursor-pointer"
+                  >
+                    {ruleProperty === 'color' ? (
+                      <>
+                        <option value="red">Vermelho (Rubi)</option>
+                        <option value="blue">Azul (Safira)</option>
+                        <option value="green">Verde (Esmeralda)</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="heavy">Pesado</option>
+                        <option value="light">Leve</option>
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
 
-              {/* ELSE Branch */}
-              <div className="p-3.5 rounded-xl bg-rose-950/20 border border-rose-500/30 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-rose-400">
-                    <span className="px-2 py-0.5 rounded bg-rose-600 text-white text-[11px]">SENÃO</span>
-                    <span>Se for Falso:</span>
-                  </div>
-                  <select
-                    value={falseTube}
-                    onChange={(e) => {
+              {/* ENTÃO (Ação se Verdadeiro) */}
+              <div className="space-y-1.5 pt-2 border-t border-purple-200">
+                <label className="text-xs font-bold text-purple-950 block">
+                  2. SE a condição for verdadeira, envie para:
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
                       sound.click();
-                      setFalseTube(e.target.value as 'A' | 'B');
+                      setTrueTube('A');
                     }}
-                    className="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 focus:outline-none cursor-pointer"
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      trueTube === 'A'
+                        ? 'bg-purple-600 text-white border-purple-700 shadow-xs'
+                        : 'bg-white text-purple-900 border-purple-200 hover:bg-purple-50'
+                    }`}
                   >
-                    <option value="A">Enviar para Tubo A</option>
-                    <option value="B">Enviar para Tubo B</option>
-                  </select>
+                    Tubo A
+                  </button>
+                  <button
+                    onClick={() => {
+                      sound.click();
+                      setTrueTube('B');
+                    }}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      trueTube === 'B'
+                        ? 'bg-purple-600 text-white border-purple-700 shadow-xs'
+                        : 'bg-white text-purple-900 border-purple-200 hover:bg-purple-50'
+                    }`}
+                  >
+                    Tubo B
+                  </button>
+                </div>
+              </div>
+
+              {/* SENÃO (Ação se Falso) */}
+              <div className="space-y-1.5 pt-2 border-t border-purple-200">
+                <label className="text-xs font-bold text-purple-950 block">
+                  3. SENÃO (caso seja falso), envie para:
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
+                      sound.click();
+                      setFalseTube('A');
+                    }}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      falseTube === 'A'
+                        ? 'bg-purple-600 text-white border-purple-700 shadow-xs'
+                        : 'bg-white text-purple-900 border-purple-200 hover:bg-purple-50'
+                    }`}
+                  >
+                    Tubo A
+                  </button>
+                  <button
+                    onClick={() => {
+                      sound.click();
+                      setFalseTube('B');
+                    }}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      falseTube === 'B'
+                        ? 'bg-purple-600 text-white border-purple-700 shadow-xs'
+                        : 'bg-white text-purple-900 border-purple-200 hover:bg-purple-50'
+                    }`}
+                  >
+                    Tubo B
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Mentor hint */}
-            <div className="p-3 bg-slate-800/40 rounded-xl border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2">
-              <HelpCircle className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-              <div>
-                <span className="font-semibold text-slate-300 block mb-0.5">Dica Pedagógica:</span>
-                <p>
-                  Observe o objetivo da meta no topo! Se você quer que os itens vermelhos vão para o Tubo A e os demais para o B, a regra deve ser: SE Cor == Vermelho ENTÃO Tubo A SENÃO Tubo B.
-                </p>
-              </div>
-            </div>
-
-            {/* Switch Level */}
-            <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-slate-400">Mudar desafio:</span>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => {
-                    sound.click();
-                    setLevel(1);
-                    setRuleProperty('color');
-                    setRuleValue('red');
-                    resetSimulation();
-                  }}
-                  className={`px-2.5 py-1 text-xs rounded-md font-medium cursor-pointer ${
-                    level === 1 ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  Nível 1 (Cor)
-                </button>
-                <button
-                  onClick={() => {
-                    sound.click();
-                    setLevel(2);
-                    setRuleProperty('weight');
-                    setRuleValue('heavy');
-                    resetSimulation();
-                  }}
-                  className={`px-2.5 py-1 text-xs rounded-md font-medium cursor-pointer ${
-                    level === 2 ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  Nível 2 (Peso)
-                </button>
-              </div>
-            </div>
+            {/* Hint Card */}
+            <HintCard 
+              hint={level === 1 
+                ? 'Queremos que todos os Rubis (Vermelho) vão para o Tubo A. Logo, configure: SE Cor == Vermelho -> Tubo A, SENÃO -> Tubo B!' 
+                : 'Queremos itens pesados no Tubo A e leves no Tubo B. Troque o sensor para verificar o Peso!'
+              } 
+            />
           </div>
         </div>
       </div>
 
-      {/* Victory celebration */}
+      {/* Pedagogical "Por que isso funciona?" Block */}
+      <LearningInsight
+        title="Por que decisões são o coração da lógica?"
+        explanation="Sem decisões, os programas seriam robôs cegos que fariam sempre a mesma coisa. As estruturas SE e SENÃO permitem que o algoritmo examine o mundo ao redor e mude seu comportamento de acordo com as circunstâncias!"
+        analogy="Pense em um sensor de porta automática: SE alguém se aproximar da porta, ENTÃO ela abre; SENÃO ela permanece fechada."
+        accentColor={theme.primary}
+        pillars={[
+          { title: 'Condição (Pergunta)', description: 'Uma expressão que resulta unicamente em Verdadeiro ou Falso.' },
+          { title: 'Bifurcação (Caminhos)', description: 'O algoritmo nunca segue os dois ramos ao mesmo tempo.' },
+          { title: 'Adaptabilidade', description: 'Permite que a máquina tome a atitude correta em qualquer cenário.' },
+        ]}
+      />
+
+      {/* Victory Celebration Modal */}
       <VictoryModal
         isOpen={showVictory}
-        title={level === 1 ? 'Mestre da Triagem por Cor' : 'Mestre da Triagem por Peso'}
-        explanation="O sensor avaliou cada item dinamicamente! O computador não precisou de regras manuais para cada objeto; ele usou uma regra lógica única (SE / SENÃO) para classificar infinitos itens automaticamente!"
+        title={level === 1 ? 'Triagem de Cores Concluída!' : 'Classificação por Densidade Perfeita!'}
+        explanation="Sua regra condicional conseguiu classificar 100% dos itens da esteira sem nenhum erro! Você dominou o conceito de bifurcação lógica SE / SENÃO."
         hasNextLevel={level === 1}
         onNextLevel={() => {
           setShowVictory(false);
           setLevel(2);
-          setRuleProperty('weight');
-          setRuleValue('heavy');
           resetSimulation();
         }}
         onRestart={() => {

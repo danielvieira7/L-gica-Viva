@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, ArrowRight, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { Award, ArrowRight, RotateCcw, CheckCircle2, Sparkles } from 'lucide-react';
 import { sound } from '../utils/sound';
 
 interface VictoryModalProps {
@@ -22,48 +22,71 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md p-6 bg-slate-900 border border-indigo-500/40 rounded-2xl shadow-2xl space-y-5 text-center">
-        {/* Badge */}
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow-lg shadow-indigo-500/10">
-          <Award className="w-7 h-7 text-amber-400" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md p-6 sm:p-8 bg-white border border-[#E2E8F0] rounded-[28px] shadow-2xl space-y-6 text-center">
+        {/* Glowing Badge / Star */}
+        <div className="relative w-16 h-16 mx-auto rounded-3xl bg-amber-50 border-2 border-amber-200 flex items-center justify-center shadow-lg shadow-amber-300/30">
+          <Sparkles className="w-9 h-9 text-amber-500 fill-amber-400" />
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-4 w-4 bg-amber-500"></span>
+          </span>
         </div>
 
-        <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Desafio Concluído!</h2>
-          <p className="text-sm font-medium text-indigo-300 mt-1">{title}</p>
+        {/* Title */}
+        <div className="space-y-1">
+          <h2 className="text-2xl font-extrabold text-[#15213D] tracking-tight">
+            Excelente Raciocínio!
+          </h2>
+          <p className="text-sm font-semibold text-[#2787F5]">
+            {title}
+          </p>
         </div>
 
-        <div className="p-4 bg-slate-800/80 border border-slate-700/60 rounded-xl text-left text-xs leading-relaxed text-slate-300 space-y-2">
-          <div className="flex items-center gap-1.5 text-emerald-400 font-semibold text-xs">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Por que o seu algoritmo funcionou:</span>
+        {/* Pedagogical validation message */}
+        <div className="p-4 sm:p-5 bg-[#F8FAFD] border border-[#E2E8F0] rounded-2xl text-left text-xs sm:text-sm leading-relaxed text-[#536178] space-y-2">
+          <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs uppercase tracking-wider">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>Por que o seu algoritmo venceu:</span>
           </div>
-          <p>{explanation}</p>
+          <p className="font-medium text-[#15213D]">
+            {explanation}
+          </p>
         </div>
 
-        <div className="flex items-center justify-center gap-3 pt-2">
+        {/* Actions */}
+        <div className="flex items-center justify-center gap-3 pt-1">
           <button
             onClick={() => {
               sound.click();
               onRestart();
             }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-white text-xs font-semibold rounded-xl border border-slate-700 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#F8FAFD] hover:bg-slate-100 active:scale-95 text-[#536178] hover:text-[#15213D] text-sm font-semibold rounded-xl border border-[#CBD5E1] transition-all cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
             <span>Refazer</span>
           </button>
 
-          {hasNextLevel && onNextLevel && (
+          {hasNextLevel && onNextLevel ? (
             <button
               onClick={() => {
                 sound.click();
                 onNextLevel();
               }}
-              className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#2787F5] hover:bg-blue-600 active:scale-95 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-500/25 transition-all cursor-pointer"
             >
-              <span>Próximo Nível</span>
+              <span>Próximo Desafio</span>
               <ArrowRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                sound.click();
+                onRestart();
+              }}
+              className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-600/25 transition-all cursor-pointer"
+            >
+              <span>Concluir e Explorar</span>
             </button>
           )}
         </div>
