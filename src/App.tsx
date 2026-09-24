@@ -39,7 +39,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F8FC] text-[#15213D] flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
+    <div className="min-h-screen bg-[#dff1ff] text-[#15213D] flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
       {/* Friendly Light Header */}
       <AppHeader
         totalStars={progress.totalStars}
@@ -48,7 +48,7 @@ export default function App() {
       />
 
       {/* Main Educational Learning Deck */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
+      <main className="app-shell flex-1 w-full mx-auto px-3 sm:px-5 py-3 sm:py-4 space-y-3 sm:space-y-4">
         {/* Visual Learning Path (Trail of modules) */}
         <LearningPath
           currentModule={currentModule}
@@ -79,18 +79,6 @@ export default function App() {
           {currentModule === 'sandbox' && <SandboxModule />}
         </section>
       </main>
-
-      {/* Friendly Educational Footer */}
-      <footer className="w-full border-t border-[#E2E8F0] bg-white py-8 mt-12 text-center text-xs text-[#536178] space-y-2">
-        <div className="flex items-center justify-center gap-2 font-bold text-[#15213D] text-sm">
-          <span>🧩 Lógica Viva</span>
-          <span className="text-[#8491A5]">•</span>
-          <span>Aprender lógica brincando, testando e observando</span>
-        </div>
-        <p className="max-w-md mx-auto text-[13px] text-[#536178]">
-          Sem sintaxe difícil, sem códigos complexos. Apenas raciocínio algorítmico visual para todas as idades.
-        </p>
-      </footer>
     </div>
   );
 }

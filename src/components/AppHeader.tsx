@@ -18,20 +18,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#cde1f4] shadow-sm">
+        <div className="app-shell mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Brand Logo & Tagline */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-300 flex items-center justify-center shadow-md shadow-amber-200/60 ring-2 ring-amber-100 flex-shrink-0">
-              <Lightbulb className="w-5 h-5 text-amber-950 fill-amber-400 stroke-[2.2]" />
+            <div className="brand-bulb w-11 h-11 rounded-2xl bg-gradient-to-b from-sky-400 to-blue-600 flex items-center justify-center shadow-md shadow-amber-200/60 ring-2 ring-amber-100 flex-shrink-0">
+              <Lightbulb className="w-6 h-6 text-yellow-300 fill-yellow-300 stroke-[2.4]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-extrabold tracking-tight text-[#15213D]">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#07124c]">
                   Lógica Viva
-                </span>
-                <span className="hidden md:inline-flex items-center text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-                  Playground Educacional
                 </span>
               </div>
               <p className="hidden sm:block text-xs font-medium text-[#536178]">
@@ -44,7 +41,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             {/* Stars Counter Pill */}
             <div 
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 font-bold text-sm shadow-xs transition-transform hover:scale-105"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-blue-200 text-[#07124c] font-extrabold text-sm shadow-xs transition-transform hover:scale-105"
               title="Estrelas conquistadas ao concluir desafios"
             >
               <Sparkles className="w-4 h-4 text-amber-500 fill-amber-400" />

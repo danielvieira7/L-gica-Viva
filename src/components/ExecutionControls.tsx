@@ -32,9 +32,9 @@ export const ExecutionControls: React.FC<ExecutionControlsProps> = ({
   primaryColor = '#2787F5',
 }) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white border border-[#E2E8F0] rounded-2xl shadow-card-soft">
+    <div className="execution-controls flex flex-wrap items-center justify-between gap-2 bg-transparent">
       {/* Play / Step / Reset cluster */}
-      <div className="flex items-center gap-2 sm:gap-2.5">
+      <div className="grid grid-cols-3 gap-2 w-full">
         {isRunning && !isPaused ? (
           <button
             onClick={() => {
@@ -42,7 +42,7 @@ export const ExecutionControls: React.FC<ExecutionControlsProps> = ({
               onPause();
             }}
             disabled={disabled}
-            className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-amber-500/25 cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 justify-center px-4 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-amber-500/25 cursor-pointer disabled:opacity-50"
           >
             <Pause className="w-4 h-4 fill-current" />
             <span>Pausar</span>
@@ -54,7 +54,7 @@ export const ExecutionControls: React.FC<ExecutionControlsProps> = ({
               onPlay();
             }}
             disabled={disabled || totalSteps === 0}
-            className="flex items-center gap-2 px-5 py-2.5 active:scale-95 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-blue-500/25 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 justify-center px-4 py-2.5 active:scale-95 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-blue-500/25 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               backgroundColor: disabled || totalSteps === 0 ? '#94A3B8' : primaryColor,
             }}
@@ -71,7 +71,7 @@ export const ExecutionControls: React.FC<ExecutionControlsProps> = ({
           }}
           disabled={disabled || totalSteps === 0}
           title="Executa exatamente 1 comando para você acompanhar a lógica"
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#F8FAFD] hover:bg-slate-100 active:scale-95 text-[#15213D] text-sm font-semibold rounded-xl border border-[#CBD5E1] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 justify-center px-4 py-2.5 bg-[#F8FAFD] hover:bg-slate-100 active:scale-95 text-[#15213D] text-sm font-semibold rounded-xl border border-[#CBD5E1] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <StepForward className="w-4 h-4 text-[#536178]" />
           <span className="hidden sm:inline">Passo a passo</span>
@@ -85,14 +85,14 @@ export const ExecutionControls: React.FC<ExecutionControlsProps> = ({
           }}
           title="Reiniciar posição inicial do teste"
           aria-label="Reiniciar teste"
-          className="p-2.5 bg-[#F8FAFD] hover:bg-slate-100 active:scale-95 text-[#536178] hover:text-[#15213D] rounded-xl border border-[#CBD5E1] transition-all cursor-pointer"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F8FAFD] hover:bg-slate-100 active:scale-95 text-[#536178] hover:text-[#15213D] rounded-xl border border-[#CBD5E1] transition-all cursor-pointer"
         >
-          <RotateCcw className="w-4 h-4" />
+          <RotateCcw className="w-4 h-4" /><span className="hidden sm:inline font-semibold text-sm">Reiniciar</span>
         </button>
       </div>
 
       {/* Progress & Speed Group */}
-      <div className="flex items-center gap-3">
+      <div className="hidden">
         {totalSteps > 0 && (
           <div className="text-xs text-[#536178] font-medium bg-[#F8FAFD] px-3 py-1.5 rounded-xl border border-[#E2E8F0]">
             Passo <strong className="text-[#15213D]">{Math.max(0, currentStepIndex + 1)}</strong> de <strong>{totalSteps}</strong>

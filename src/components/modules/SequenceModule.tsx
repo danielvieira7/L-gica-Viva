@@ -21,6 +21,7 @@ import { HintCard } from '../HintCard';
 import { LearningInsight } from '../LearningInsight';
 import { VictoryModal } from '../VictoryModal';
 import { MODULE_THEMES } from '../../designTokens';
+import mentorAvatar from '../../assets/images/mentor-avatar.webp';
 
 const ACTION_DEFINITIONS: Record<ActionType, { 
   label: string; 
@@ -138,7 +139,7 @@ const LEVELS: SequenceLevel[] = [
       { x: 3, y: 2, type: 'wall' },
       { x: 4, y: 2, type: 'wall' },
     ],
-    allowedActions: ['forward', 'collect'],
+    allowedActions: ['forward', 'turn_right', 'turn_left', 'collect'],
     maxBlocks: 6,
     hint: 'O robô já está olhando para a direita. Diga para ele avançar até o cristal, coletar, e depois continuar avançando até o portal!',
   },
@@ -203,7 +204,19 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
   const currentLevel = LEVELS[levelIndex];
 
   // User program list of blocks
-  const [program, setProgram] = useState<ActionBlock[]>([]);
+  const [program, setProgram] = useState<ActionBlock[]>(() =>
+    (['forward', 'forward', 'collect', 'forward', 'forward'] as ActionType[]).map((type, index) => {
+      const def = ACTION_DEFINITIONS[type];
+      return {
+        id: `starter-${index + 1}`,
+        type,
+        label: def.label,
+        iconName: type,
+        description: def.desc,
+        color: def.textColor,
+      };
+    })
+  );
 
   // Execution state
   const [robotPos, setRobotPos] = useState<GridPos>(currentLevel.robotStart.pos);
@@ -220,6 +233,7 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
   const [showVictory, setShowVictory] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialMount = useRef(true);
 
   // Reset when level changes
   useEffect(() => {
@@ -476,7 +490,7 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
   const theme = MODULE_THEMES.sequence;
 
   return (
-    <div className="space-y-6">
+    <div className="sequence-screen space-y-3 sm:space-y-4">
       {/* Module Hero Banner */}
       <ModuleHero
         moduleId="sequence"
@@ -487,11 +501,11 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
       />
 
       {/* Main Two-Zone Laboratory Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-stretch">
         {/* Zone 1: Interactive Mission & Stage (60%) */}
-        <div className="lg:col-span-7 bg-white rounded-[24px] border border-[#E2E8F0] p-5 sm:p-7 shadow-card-soft space-y-4">
+        <div className="mission-card lg:col-span-7 bg-white rounded-[22px] border border-[#d7e5f2] p-3 sm:p-4 shadow-card-soft space-y-2.5 flex flex-col">
           {/* Header of Stage */}
-          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+          <div className="flex items-center justify-between pb-1.5">
             <div className="flex items-center gap-2">
               <span className="text-base font-bold text-[#15213D] flex items-center gap-2">
                 🎮 Missão Interativa
@@ -518,23 +532,22 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
             </div>
           </div>
 
-          {/* Mentor Speech Bubble */}
-          <div className="flex items-center gap-3 bg-[#EEF5FF] border border-[#BBDDFF] rounded-2xl p-3.5 shadow-2xs">
-            <div className="w-8 h-8 rounded-xl bg-white border border-[#BBDDFF] flex items-center justify-center text-blue-600 shrink-0 shadow-xs">
-              <MessageSquareQuote className="w-4 h-4" />
-            </div>
-            <p className="text-xs sm:text-sm font-semibold text-[#15213D] leading-snug">
+                    {/* Mentor Speech Bubble */}
+          <div className="mentor-bubble relative flex items-center gap-3 bg-white border border-[#BBDDFF] rounded-2xl py-2.5 pl-16 pr-4 shadow-md max-w-[410px]">
+            <img src={mentorAvatar} alt="Mentora do Lógica Viva" className="absolute -left-2 -bottom-2 w-16 h-16 rounded-full object-cover object-top border-4 border-white shadow-md" />
+            <MessageSquareQuote className="w-4 h-4 text-blue-600 shrink-0" />
+            <p className="text-xs sm:text-sm font-semibold text-[#07124c] leading-snug">
               {statusMessage}
             </p>
           </div>
 
           {/* The Visual World Board (Grassy Trail & Obstacles) */}
-          <div className="p-4 sm:p-6 bg-[#F4F9EE] rounded-2xl border border-[#D5E8C4] overflow-x-auto shadow-inner flex justify-center items-center min-h-[300px]">
+          <div className="game-board p-3 sm:p-4 rounded-2xl border border-[#8bc778] overflow-x-auto shadow-inner flex justify-center items-center min-h-[245px] flex-1">
             <div 
-              className="grid gap-2 select-none"
+              className="grid gap-1.5 sm:gap-2 select-none"
               style={{
-                gridTemplateColumns: `repeat(${currentLevel.gridSize.width}, minmax(60px, 74px))`,
-                gridTemplateRows: `repeat(${currentLevel.gridSize.height}, minmax(60px, 74px))`,
+                gridTemplateColumns: `repeat(${currentLevel.gridSize.width}, minmax(58px, 88px))`,
+                gridTemplateRows: `repeat(${currentLevel.gridSize.height}, minmax(58px, 88px))`,
               }}
             >
               {Array.from({ length: currentLevel.gridSize.height }).map((_, y) =>
@@ -551,27 +564,24 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
                   return (
                     <div
                       key={`${x}-${y}`}
-                      className={`relative rounded-2xl flex items-center justify-center transition-all duration-200 border text-xs ${
+                      className={`relative game-cell rounded-xl flex items-center justify-center transition-all duration-200 border text-xs ${
                         isWall
-                          ? 'bg-[#94A3B8] border-[#64748B] shadow-md shadow-slate-400/30'
+                          ? 'wall-cell bg-[#82926d] border-[#5c6951] shadow-md'
                           : isExit
-                          ? 'bg-[#EEF2FF] border-[#818CF8] shadow-md shadow-indigo-300/40'
+                          ? 'portal-cell bg-[#c8e8ff] border-[#438de8] shadow-lg shadow-cyan-300/50'
                           : isGate
                           ? gateUnlocked
                             ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
                             : 'bg-rose-50 border-rose-400 text-rose-700'
-                          : 'bg-[#FFFFFF] border-[#E2E8F0] shadow-2xs hover:border-slate-300'
+                          : 'path-cell bg-[#f8d994] border-[#e7b75f] shadow-2xs'
                       }`}
                     >
                       {/* Gentle coordinate label */}
-                      <span className="absolute top-1 left-2 text-[9px] font-semibold text-[#94A3B8] select-none">
-                        {x},{y}
-                      </span>
 
                       {/* Wall: cute solid rock */}
                       {isWall && (
                         <div className="flex flex-col items-center justify-center text-slate-100">
-                          <span className="text-lg select-none">🪨</span>
+                          <span className='text-2xl select-none'>{(x + y) % 3 === 0 ? '🌳' : (x + y) % 2 === 0 ? '🌼' : '🪨'}</span>
                         </div>
                       )}
 
@@ -621,11 +631,6 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
                       {isRobot && (
                         <div
                           className="absolute inset-0 flex items-center justify-center transition-transform duration-300 z-20"
-                          style={{
-                            transform: `rotate(${
-                              robotDir === 'north' ? 0 : robotDir === 'east' ? 90 : robotDir === 'south' ? 180 : 270
-                            }deg)`,
-                          }}
                         >
                           <div className="relative w-11 h-11 rounded-2xl bg-white border-2 border-[#2787F5] shadow-lg flex items-center justify-center">
                             {/* Direction Pointer Arrow */}
@@ -662,9 +667,9 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
         </div>
 
         {/* Zone 2: Program Assembler Deck (40%) */}
-        <div className="lg:col-span-5 space-y-4">
+        <div className="algorithm-panel lg:col-span-5 bg-white rounded-[22px] border border-[#d7e5f2] p-3 sm:p-4 shadow-card-soft space-y-3 flex flex-col">
           {/* Card: Command Palette */}
-          <div className="bg-white rounded-[24px] border border-[#E2E8F0] p-5 sm:p-6 shadow-card-soft space-y-3.5">
+          <div className="command-card space-y-2.5">
             <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
               <div>
                 <h3 className="text-base font-bold text-[#15213D] flex items-center gap-1.5">
@@ -683,7 +688,7 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
             </div>
 
             {/* Chunky tactile command buttons */}
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2">
               {currentLevel.allowedActions.map((actType) => {
                 const def = ACTION_DEFINITIONS[actType];
                 return (
@@ -691,9 +696,9 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
                     key={actType}
                     onClick={() => addActionToProgram(actType)}
                     disabled={isRunning}
-                    className={`flex items-center gap-2.5 p-3 rounded-2xl border text-xs font-bold transition-all tactile-btn shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${def.bg} ${def.hoverBg} ${def.textColor} ${def.border}`}
+                    className={`command-block flex flex-col items-center justify-center gap-1.5 p-2.5 min-h-[76px] rounded-xl border text-xs font-bold transition-all tactile-btn shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${def.bg} ${def.hoverBg} ${def.textColor} ${def.border}`}
                   >
-                    <div className="w-7 h-7 rounded-xl bg-white/90 flex items-center justify-center shrink-0 shadow-2xs">
+                    <div className="w-8 h-8 rounded-lg bg-white/90 flex items-center justify-center shrink-0 shadow-2xs">
                       {def.icon}
                     </div>
                     <span className="text-left">{def.shortLabel}</span>
@@ -704,7 +709,7 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
           </div>
 
           {/* Card: Algorithm Sequence Tape */}
-          <div className="bg-white rounded-[24px] border border-[#E2E8F0] p-5 sm:p-6 shadow-card-soft space-y-3.5">
+          <div className="command-card space-y-2.5">
             <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-[#15213D]">
@@ -737,7 +742,7 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
                 </p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+              <div className="space-y-1.5 max-h-[210px] overflow-y-auto pr-1">
                 {program.map((block, idx) => {
                   const isCurrent = currentStepIndex === idx;
                   const def = ACTION_DEFINITIONS[block.type];
@@ -745,7 +750,7 @@ export const SequenceModule: React.FC<SequenceModuleProps> = ({ onLevelCompleted
                   return (
                     <div
                       key={block.id}
-                      className={`flex items-center justify-between p-2.5 sm:p-3 rounded-xl border text-xs sm:text-sm transition-all ${
+                      className={`flex items-center justify-between px-2.5 py-2 rounded-xl border text-xs sm:text-sm transition-all ${
                         isCurrent
                           ? 'bg-blue-50 border-[#2787F5] ring-2 ring-blue-400/40 text-blue-900 shadow-sm translate-x-1 font-bold'
                           : 'bg-[#F8FAFD] border-[#E2E8F0] text-[#15213D] font-medium'
